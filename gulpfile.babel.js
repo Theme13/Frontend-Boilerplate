@@ -14,6 +14,7 @@ import commonjs from 'rollup-plugin-commonjs'
 import nunjucks from 'gulp-nunjucks'
 import browserSync from 'browser-sync'
 import uglify from 'gulp-uglify'
+import imagemin from 'gulp-imagemin'
 
 const dirs = {
     src: 'src',
@@ -34,6 +35,10 @@ const sources = {
         dev: `${dirs.src}/template/*.html`,
         other: `${dirs.src}/template/**/*.html`,
         dist: `${dirs.dist}`,
+    },
+    images: {
+        dev: `${dirs.src}/images/*`,
+        dist: `${dirs.dist}/assets/images`
     }
 }
 
@@ -59,6 +64,11 @@ export const buildTemplate = () => src(sources.templates.dev)
     .pipe(dest(sources.templates.dist))
     .pipe(browserSync.reload({ stream:true }))
 
+export const buildImages = () => src(sources.images.dev)
+    .pipe(imagemin())
+    .pipe(dest(sources.images.dist))
+    .pipe(browserSync.reload({ stream:true }))
+
 export const devWatch = () => {
     browserSync.init({
         server: dirs.dist
@@ -67,13 +77,14 @@ export const devWatch = () => {
     watch(sources.styles.sass, buildStyles)
     watch(sources.scripts.dev, buildScripts)
     watch([sources.templates.dev, sources.templates.other], buildTemplate).on('change', browserSync.reload)
+    watch(sources.images.src, buildImages).on('change', browserSync.reload)
 }
 
 export const clean = () => del([dirs.dist])
 
-export const dev = series(clean, parallel(buildStyles, buildScripts, buildTemplate), devWatch)
+export const dev = series(clean, parallel(buildStyles, buildScripts, buildTemplate, buildImages), devWatch)
 
-export const build = series(clean, parallel(buildStyles, buildScripts, buildTemplate))
+export const build = series(clean, parallel(buildStyles, buildScripts, buildTemplate, buildImages))
 
 export default dev
 
